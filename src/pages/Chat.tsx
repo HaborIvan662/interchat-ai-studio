@@ -4,6 +4,7 @@ import { ChatSidebar } from '@/components/chat/ChatSidebar';
 import { ChatArea } from '@/components/chat/ChatArea';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { ConfigPanel } from '@/components/chat/ConfigPanel';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
 
@@ -102,14 +103,17 @@ const Chat = () => {
         {/* Header */}
         <div className="border-b p-4 flex justify-between items-center">
           <h1 className="text-xl font-semibold">AI Chat Assistant</h1>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowConfig(!showConfig)}
-          >
-            <Settings className="h-4 w-4" />
-            Settings
-          </Button>
+          <div className="flex gap-2">
+            <ThemeToggle />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowConfig(!showConfig)}
+            >
+              <Settings className="h-4 w-4" />
+              Settings
+            </Button>
+          </div>
         </div>
 
         <div className="flex flex-1 overflow-hidden">

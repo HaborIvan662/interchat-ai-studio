@@ -89,23 +89,23 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <div className="border-t bg-background p-4">
+    <div className="border-t bg-background p-2 sm:p-4">
       <div className="max-w-4xl mx-auto">
         {/* Attachments Preview */}
         {attachments.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-2">
             {attachments.map((attachment) => (
-              <div key={attachment.id} className="flex items-center gap-2 bg-muted px-3 py-2 rounded-lg text-sm border">
+              <div key={attachment.id} className="flex items-center gap-2 bg-muted px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm border">
                 {getAttachmentIcon(attachment.type)}
-                <span className="max-w-32 truncate">{attachment.name}</span>
+                <span className="max-w-20 sm:max-w-32 truncate">{attachment.name}</span>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
                   onClick={() => removeAttachment(attachment.id)}
-                  className="h-5 w-5 p-0 hover:bg-destructive hover:text-destructive-foreground rounded-full"
+                  className="h-4 w-4 sm:h-5 sm:w-5 p-0 hover:bg-destructive hover:text-destructive-foreground rounded-full"
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                 </Button>
               </div>
             ))}
@@ -114,8 +114,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         
         {/* Input Area */}
         <Card className="border-2 border-border hover:border-primary/50 transition-colors">
-          <form onSubmit={handleSubmit} className="p-3">
-            <div className="flex gap-3 items-end">
+          <form onSubmit={handleSubmit} className="p-2 sm:p-3">
+            <div className="flex gap-2 sm:gap-3 items-end">
               {/* Text Input */}
               <div className="flex-1 relative">
                 <Textarea
@@ -123,10 +123,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   value={message}
                   onChange={handleTextareaChange}
                   onKeyPress={handleKeyPress}
-                  placeholder="Type your message... (Shift + Enter for new line)"
+                  placeholder="Type your message..."
                   disabled={disabled}
-                  className="min-h-[44px] max-h-[120px] resize-none border-0 bg-transparent p-3 focus-visible:ring-0 focus-visible:ring-offset-0"
-                  style={{ height: '44px' }}
+                  className="min-h-[40px] sm:min-h-[44px] max-h-[100px] sm:max-h-[120px] resize-none border-0 bg-transparent p-2 sm:p-3 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm sm:text-base"
+                  style={{ height: '40px' }}
                 />
               </div>
               
@@ -148,13 +148,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   size="sm"
                   onClick={() => document.getElementById('file-upload')?.click()}
                   disabled={disabled}
-                  className="h-9 w-9 p-0 hover:bg-muted"
+                  className="h-8 w-8 sm:h-9 sm:w-9 p-0 hover:bg-muted"
                   title="Attach files"
                 >
-                  <Paperclip className="h-4 w-4" />
+                  <Paperclip className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Button>
                 
-                {/* Voice Input */}
+                {/* Voice Input - Hidden on very small screens */}
                 {config.enableVoice && (
                   <Button
                     type="button"
@@ -162,12 +162,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     size="sm"
                     onClick={toggleVoiceInput}
                     disabled={disabled}
-                    className={`h-9 w-9 p-0 hover:bg-muted ${
+                    className={`h-8 w-8 sm:h-9 sm:w-9 p-0 hover:bg-muted hidden xs:flex ${
                       isListening ? 'bg-red-500 text-white hover:bg-red-600' : ''
                     }`}
                     title={isListening ? 'Stop recording' : 'Start voice input'}
                   >
-                    {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                    {isListening ? <MicOff className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
                   </Button>
                 )}
                 
@@ -176,10 +176,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   type="submit"
                   disabled={disabled || !message.trim()}
                   size="sm"
-                  className="h-9 w-9 p-0"
+                  className="h-8 w-8 sm:h-9 sm:w-9 p-0"
                   title="Send message"
                 >
-                  <Send className="h-4 w-4" />
+                  <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Button>
               </div>
             </div>
@@ -187,7 +187,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         </Card>
         
         {/* Helper Text */}
-        <div className="mt-2 text-xs text-muted-foreground text-center">
+        <div className="mt-2 text-xs text-muted-foreground text-center hidden sm:block">
           Press Enter to send • Shift + Enter for new line • Attach files up to 10MB
         </div>
       </div>
