@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
-import { Send, Paperclip, Mic, MicOff } from 'lucide-react';
+import { Send, Paperclip, Mic, MicOff, X, Image, FileText } from 'lucide-react';
 import { Attachment, ChatConfig } from '@/pages/Chat';
 
 interface ChatInputProps {
@@ -20,6 +20,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [message, setMessage] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isListening, setIsListening] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +28,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       onSendMessage(message.trim(), attachments);
       setMessage('');
       setAttachments([]);
+      if (textareaRef.current) {
+        textareaRef.current.style.height = '44px';
+      }
     }
   };
 
@@ -34,6 +38,16 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
+    }
+  };
+
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(e.target.value);
+    
+    // Auto-resize textarea
+    if (textareaRef.current) {
+      textareaRef.current.style.height = '44px';
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
     }
   };
 
@@ -49,6 +63,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       size: file.size,
     }));
     setAttachments(prev => [...prev, ...newAttachments]);
+    
+    // Reset file input
+    e.target.value = '';
+  };
+
+  const removeAttachment = (id: string) => {
+    setAttachments(prev => prev.filter(a => a.id !== id));
   };
 
   const toggleVoiceInput = () => {
@@ -56,83 +77,120 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     // Voice input implementation would go here
   };
 
+  const getAttachmentIcon = (type: string) => {
+    switch (type) {
+      case 'image':
+        return <Image className="h-3 w-3" />;
+      case 'video':
+        return <FileText className="h-3 w-3" />;
+      default:
+        return <FileText className="h-3 w-3" />;
+    }
+  };
+
   return (
-    <Card className="p-4 border-t">
-      <form onSubmit={handleSubmit} className="space-y-3">
+    <div className="border-t bg-background p-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Attachments Preview */}
         {attachments.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="mb-3 flex flex-wrap gap-2">
             {attachments.map((attachment) => (
-              <div key={attachment.id} className="flex items-center gap-2 bg-muted px-2 py-1 rounded text-sm">
-                <span>{attachment.name}</span>
+              <div key={attachment.id} className="flex items-center gap-2 bg-muted px-3 py-2 rounded-lg text-sm border">
+                {getAttachmentIcon(attachment.type)}
+                <span className="max-w-32 truncate">{attachment.name}</span>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => setAttachments(prev => prev.filter(a => a.id !== attachment.id))}
-                  className="h-4 w-4 p-0"
+                  onClick={() => removeAttachment(attachment.id)}
+                  className="h-5 w-5 p-0 hover:bg-destructive hover:text-destructive-foreground rounded-full"
                 >
-                  ×
+                  <X className="h-3 w-3" />
                 </Button>
               </div>
             ))}
           </div>
         )}
         
-        <div className="flex gap-2">
-          <div className="flex-1">
-            <Textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Type your message..."
-              disabled={disabled}
-              rows={1}
-              className="min-h-[40px] resize-none"
-            />
-          </div>
-          
-          <div className="flex flex-col gap-2">
-            <input
-              type="file"
-              multiple
-              onChange={handleFileUpload}
-              className="hidden"
-              id="file-upload"
-            />
-            
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => document.getElementById('file-upload')?.click()}
-              disabled={disabled}
-            >
-              <Paperclip className="h-4 w-4" />
-            </Button>
-            
-            {config.enableVoice && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={toggleVoiceInput}
-                disabled={disabled}
-                className={isListening ? 'bg-red-500 text-white' : ''}
-              >
-                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-              </Button>
-            )}
-            
-            <Button
-              type="submit"
-              disabled={disabled || !message.trim()}
-              size="sm"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
+        {/* Input Area */}
+        <Card className="border-2 border-border hover:border-primary/50 transition-colors">
+          <form onSubmit={handleSubmit} className="p-3">
+            <div className="flex gap-3 items-end">
+              {/* Text Input */}
+              <div className="flex-1 relative">
+                <Textarea
+                  ref={textareaRef}
+                  value={message}
+                  onChange={handleTextareaChange}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type your message... (Shift + Enter for new line)"
+                  disabled={disabled}
+                  className="min-h-[44px] max-h-[120px] resize-none border-0 bg-transparent p-3 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  style={{ height: '44px' }}
+                />
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex gap-1">
+                {/* File Upload */}
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="file-upload"
+                  accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
+                />
+                
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => document.getElementById('file-upload')?.click()}
+                  disabled={disabled}
+                  className="h-9 w-9 p-0 hover:bg-muted"
+                  title="Attach files"
+                >
+                  <Paperclip className="h-4 w-4" />
+                </Button>
+                
+                {/* Voice Input */}
+                {config.enableVoice && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleVoiceInput}
+                    disabled={disabled}
+                    className={`h-9 w-9 p-0 hover:bg-muted ${
+                      isListening ? 'bg-red-500 text-white hover:bg-red-600' : ''
+                    }`}
+                    title={isListening ? 'Stop recording' : 'Start voice input'}
+                  >
+                    {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                  </Button>
+                )}
+                
+                {/* Send Button */}
+                <Button
+                  type="submit"
+                  disabled={disabled || !message.trim()}
+                  size="sm"
+                  className="h-9 w-9 p-0"
+                  title="Send message"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </form>
+        </Card>
+        
+        {/* Helper Text */}
+        <div className="mt-2 text-xs text-muted-foreground text-center">
+          Press Enter to send • Shift + Enter for new line • Attach files up to 10MB
         </div>
-      </form>
-    </Card>
+      </div>
+    </div>
   );
 };
