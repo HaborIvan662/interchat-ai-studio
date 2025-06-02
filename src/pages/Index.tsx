@@ -1,102 +1,51 @@
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageCircle, Mic, Image, Settings, Users } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { MessageCircle, Settings, Mic, FileText } from "lucide-react";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">AI Chat Studio</h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Experience the future of AI interaction with our multimodal chat application. 
-            Send text, images, voice, and files while getting intelligent responses.
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            AI Chat Assistant
+          </h1>
+          <p className="text-xl text-gray-600 mb-8">
+            Interactive, multimodal chat application with advanced AI capabilities
           </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageCircle className="h-5 w-5" />
-                Multimodal Input
-              </CardTitle>
-              <CardDescription>
-                Send text, voice messages, images, videos, and data files
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mic className="h-5 w-5" />
-                Voice Integration
-              </CardTitle>
-              <CardDescription>
-                Speak naturally and receive audio responses from the AI
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Image className="h-5 w-5" />
-                Visual Understanding
-              </CardTitle>
-              <CardDescription>
-                Upload images and videos for AI analysis and discussion
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Customizable
-              </CardTitle>
-              <CardDescription>
-                Configure AI behavior, models, and interaction preferences
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Collaborative
-              </CardTitle>
-              <CardDescription>
-                Provide feedback, corrections, and annotations to improve responses
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageCircle className="h-5 w-5" />
-                Advanced Features
-              </CardTitle>
-              <CardDescription>
-                Basic and advanced modes with professional tools and controls
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
-
-        <div className="text-center">
           <Link to="/chat">
-            <Button size="lg" className="text-lg px-8 py-3">
+            <Button size="lg" className="text-lg px-8 py-4">
+              <MessageCircle className="mr-2 h-5 w-5" />
               Start Chatting
             </Button>
           </Link>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          <div className="text-center p-6 bg-white rounded-lg shadow-md">
+            <FileText className="h-12 w-12 text-blue-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Multimodal Input</h3>
+            <p className="text-gray-600">
+              Upload images, videos, documents, and more
+            </p>
+          </div>
+
+          <div className="text-center p-6 bg-white rounded-lg shadow-md">
+            <Mic className="h-12 w-12 text-green-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Voice Input</h3>
+            <p className="text-gray-600">
+              Speak naturally with voice recognition
+            </p>
+          </div>
+
+          <div className="text-center p-6 bg-white rounded-lg shadow-md">
+            <Settings className="h-12 w-12 text-purple-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Customizable</h3>
+            <p className="text-gray-600">
+              Configure settings and preferences
+            </p>
+          </div>
         </div>
       </div>
     </div>
