@@ -1,6 +1,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { MessageCircle } from 'lucide-react';
 import { MessageBubble } from './MessageBubble';
 import { LoadingIndicator } from './LoadingIndicator';
 import { Message, MessageFeedback, ChatConfig } from '@/pages/Chat';
