@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
-import { Send, Paperclip, Mic, MicOff, X, Image, FileText, Edit } from 'lucide-react';
+import { Send, Paperclip, Mic, MicOff, X, Image, FileText } from 'lucide-react';
 import { Attachment, ChatConfig } from '@/pages/Chat';
 import { speechService } from '@/services/speechService';
 
@@ -21,7 +21,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [message, setMessage] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isListening, setIsListening] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
   const [interimTranscript, setInterimTranscript] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -39,7 +38,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       onSendMessage(message.trim(), attachments);
       setMessage('');
       setAttachments([]);
-      setIsEditMode(false);
       if (textareaRef.current) {
         textareaRef.current.style.height = '44px';
       }
@@ -61,10 +59,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     const files = Array.from(e.target.files || []);
     
     files.forEach(file => {
-      // Create file URL for preview
       const fileUrl = URL.createObjectURL(file);
       
-      // Determine file type
       let fileType: 'image' | 'video' | 'audio' | 'text' | 'data' = 'data';
       if (file.type.startsWith('image/')) fileType = 'image';
       else if (file.type.startsWith('video/')) fileType = 'video';
@@ -82,7 +78,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       setAttachments(prev => [...prev, newAttachment]);
     });
     
-    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -132,13 +127,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
-  const toggleEditMode = () => {
-    setIsEditMode(!isEditMode);
-    if (!isEditMode && textareaRef.current) {
-      setTimeout(() => textareaRef.current?.focus(), 0);
-    }
-  };
-
   const getAttachmentIcon = (type: string) => {
     switch (type) {
       case 'image':
@@ -182,9 +170,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         )}
         
         {/* Input Area */}
-        <Card className={`border-2 transition-colors ${
-          isEditMode ? 'border-primary' : 'border-border hover:border-primary/50'
-        }`}>
+        <Card className="border-2 transition-colors border-border hover:border-primary/50">
           <form onSubmit={handleSubmit} className="p-2 sm:p-3">
             <div className="flex gap-2 sm:gap-3 items-end">
               {/* Text Input */}
@@ -210,21 +196,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               
               {/* Action Buttons */}
               <div className="flex gap-1">
-                {/* Edit Mode Toggle */}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleEditMode}
-                  disabled={disabled}
-                  className={`h-8 w-8 sm:h-9 sm:w-9 p-0 hover:bg-muted ${
-                    isEditMode ? 'bg-primary text-primary-foreground' : ''
-                  }`}
-                  title="Toggle edit mode"
-                >
-                  <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                </Button>
-
                 {/* File Upload */}
                 <input
                   type="file"

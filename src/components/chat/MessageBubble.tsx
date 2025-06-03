@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Message, MessageFeedback } from '@/pages/Chat';
-import { User, Bot, ThumbsUp, ThumbsDown, Edit, RotateCcw, Copy, Check } from 'lucide-react';
+import { User, Bot, ThumbsUp, ThumbsDown, Edit, RotateCcw, Copy, Check, Save, X } from 'lucide-react';
 import { AttachmentDisplay } from './AttachmentDisplay';
 
 interface MessageBubbleProps {
@@ -27,6 +26,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   const [showReprompt, setShowReprompt] = useState(false);
   const [repromptContent, setRepromptContent] = useState(message.content);
   const [copied, setCopied] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedContent, setEditedContent] = useState(message.content);
 
   const isUser = message.type === 'user';
 
@@ -51,6 +52,23 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleEdit = () => {
+    setIsEditing(true);
+    setEditedContent(message.content);
+  };
+
+  const handleSaveEdit = () => {
+    // In a real app, you'd update the message content here
+    // For now, we'll use reprompt functionality
+    onReprompt(message, editedContent);
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditedContent(message.content);
+  };
+
   return (
     <div className={`flex gap-4 group ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
       {/* Avatar */}
@@ -72,13 +90,34 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             : 'bg-card border-border hover:border-primary/20'
         }`}>
           <div className="space-y-3">
-            {/* Message Text */}
-            <div className="whitespace-pre-wrap leading-relaxed">
-              {message.content}
-            </div>
+            {/* Message Text or Edit Area */}
+            {isEditing ? (
+              <div className="space-y-2">
+                <Textarea
+                  value={editedContent}
+                  onChange={(e) => setEditedContent(e.target.value)}
+                  className="min-h-[100px] text-sm"
+                  placeholder="Edit your message..."
+                />
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleSaveEdit} className="text-xs">
+                    <Save className="h-3 w-3 mr-1" />
+                    Save & Re-send
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={handleCancelEdit} className="text-xs">
+                    <X className="h-3 w-3 mr-1" />
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="whitespace-pre-wrap leading-relaxed">
+                {message.content}
+              </div>
+            )}
             
             {/* Attachments */}
-            {message.attachments && message.attachments.length > 0 && (
+            {message.attachments && message.attachments.length > 0 && !isEditing && (
               <div className="space-y-2 pt-2 border-t border-white/20">
                 {message.attachments.map((attachment) => (
                   <AttachmentDisplay key={attachment.id} attachment={attachment} />
@@ -97,23 +136,37 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     {message.feedback.rating}
                   </Badge>
                 )}
-                {!isUser && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleCopy}
-                    className={`h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity ${
-                      isUser ? 'hover:bg-white/20' : 'hover:bg-muted'
-                    }`}
-                  >
-                    {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                  </Button>
+                {!isEditing && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCopy}
+                      className={`h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity ${
+                        isUser ? 'hover:bg-white/20' : 'hover:bg-muted'
+                      }`}
+                    >
+                      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                    </Button>
+                    {isUser && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleEdit}
+                        className={`h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity ${
+                          isUser ? 'hover:bg-white/20' : 'hover:bg-muted'
+                        }`}
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
 
             {/* Advanced Controls */}
-            {!isUser && showAdvancedControls && (
+            {!isUser && showAdvancedControls && !isEditing && (
               <div className="flex gap-2 pt-3 border-t border-border/20">
                 <Button
                   variant="ghost"
@@ -157,7 +210,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             )}
 
             {/* Feedback Form */}
-            {showFeedback && (
+            {showFeedback && !isEditing && (
               <div className="space-y-3 pt-3 border-t border-border/20 animate-fade-in">
                 <Textarea
                   placeholder="Add annotation or feedback..."
@@ -188,7 +241,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             )}
 
             {/* Re-prompt Form */}
-            {showReprompt && (
+            {showReprompt && !isEditing && (
               <div className="space-y-3 pt-3 border-t border-border/20 animate-fade-in">
                 <Textarea
                   value={repromptContent}
