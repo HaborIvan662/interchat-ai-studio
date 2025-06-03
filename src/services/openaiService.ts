@@ -50,4 +50,4 @@ export class OpenAIService {
   }
 }
 
-export const openaiService = new OpenAI Service();
+export const openaiService = new OpenAIService();
