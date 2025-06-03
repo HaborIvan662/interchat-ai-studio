@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatSidebar } from '@/components/chat/ChatSidebar';
 import { ChatArea } from '@/components/chat/ChatArea';
@@ -44,15 +45,32 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
-  const [config, setConfig] = useState<ChatConfig>({
-    mode: 'basic',
-    model: 'gpt-4o-mini',
-    temperature: 0.7,
-    maxTokens: 1000,
-    enableVoice: true,
-    enableAnnotations: true,
-    openaiApiKey: '',
+  
+  // Load config from localStorage on startup
+  const [config, setConfig] = useState<ChatConfig>(() => {
+    const savedConfig = localStorage.getItem('chatConfig');
+    if (savedConfig) {
+      try {
+        return JSON.parse(savedConfig);
+      } catch (error) {
+        console.error('Error parsing saved config:', error);
+      }
+    }
+    return {
+      mode: 'basic',
+      model: 'gpt-4o-mini',
+      temperature: 0.7,
+      maxTokens: 1000,
+      enableVoice: true,
+      enableAnnotations: true,
+      openaiApiKey: '',
+    };
   });
+
+  // Save config to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('chatConfig', JSON.stringify(config));
+  }, [config]);
 
   const handleSendMessage = async (content: string, attachments: Attachment[] = []) => {
     const userMessage: Message = {
