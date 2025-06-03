@@ -1,10 +1,11 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
-import { Send, Paperclip, Mic, MicOff, X, Image, FileText } from 'lucide-react';
+import { Send, Paperclip, Mic, MicOff, X, Image, FileText, Edit } from 'lucide-react';
 import { Attachment, ChatConfig } from '@/pages/Chat';
+import { speechService } from '@/services/speechService';
 
 interface ChatInputProps {
   onSendMessage: (content: string, attachments: Attachment[]) => void;
@@ -20,7 +21,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [message, setMessage] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isListening, setIsListening] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [interimTranscript, setInterimTranscript] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = '44px';
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+    }
+  }, [message]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +39,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       onSendMessage(message.trim(), attachments);
       setMessage('');
       setAttachments([]);
+      setIsEditMode(false);
       if (textareaRef.current) {
         textareaRef.current.style.height = '44px';
       }
@@ -43,38 +55,88 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
-    
-    // Auto-resize textarea
-    if (textareaRef.current) {
-      textareaRef.current.style.height = '44px';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
-    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const newAttachments: Attachment[] = files.map(file => ({
-      id: crypto.randomUUID(),
-      type: file.type.startsWith('image/') ? 'image' : 
-            file.type.startsWith('video/') ? 'video' :
-            file.type.startsWith('audio/') ? 'audio' : 'data',
-      name: file.name,
-      url: URL.createObjectURL(file),
-      size: file.size,
-    }));
-    setAttachments(prev => [...prev, ...newAttachments]);
+    
+    files.forEach(file => {
+      // Create file URL for preview
+      const fileUrl = URL.createObjectURL(file);
+      
+      // Determine file type
+      let fileType: 'image' | 'video' | 'audio' | 'text' | 'data' = 'data';
+      if (file.type.startsWith('image/')) fileType = 'image';
+      else if (file.type.startsWith('video/')) fileType = 'video';
+      else if (file.type.startsWith('audio/')) fileType = 'audio';
+      else if (file.type.startsWith('text/') || file.name.endsWith('.txt') || file.name.endsWith('.md')) fileType = 'text';
+
+      const newAttachment: Attachment = {
+        id: crypto.randomUUID(),
+        type: fileType,
+        name: file.name,
+        url: fileUrl,
+        size: file.size,
+      };
+
+      setAttachments(prev => [...prev, newAttachment]);
+    });
     
     // Reset file input
-    e.target.value = '';
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const removeAttachment = (id: string) => {
-    setAttachments(prev => prev.filter(a => a.id !== id));
+    setAttachments(prev => {
+      const attachment = prev.find(a => a.id === id);
+      if (attachment) {
+        URL.revokeObjectURL(attachment.url);
+      }
+      return prev.filter(a => a.id !== id);
+    });
   };
 
-  const toggleVoiceInput = () => {
-    setIsListening(!isListening);
-    // Voice input implementation would go here
+  const toggleVoiceInput = async () => {
+    if (!speechService.isSupported()) {
+      alert('Speech recognition is not supported in your browser');
+      return;
+    }
+
+    if (isListening) {
+      speechService.stopListening();
+      setIsListening(false);
+      setInterimTranscript('');
+    } else {
+      try {
+        await speechService.startListening(
+          (transcript, isFinal) => {
+            if (isFinal) {
+              setMessage(prev => prev + transcript + ' ');
+              setInterimTranscript('');
+            } else {
+              setInterimTranscript(transcript);
+            }
+          },
+          (error) => {
+            console.error('Speech recognition error:', error);
+            setIsListening(false);
+            setInterimTranscript('');
+          }
+        );
+        setIsListening(true);
+      } catch (error) {
+        console.error('Failed to start speech recognition:', error);
+      }
+    }
+  };
+
+  const toggleEditMode = () => {
+    setIsEditMode(!isEditMode);
+    if (!isEditMode && textareaRef.current) {
+      setTimeout(() => textareaRef.current?.focus(), 0);
+    }
   };
 
   const getAttachmentIcon = (type: string) => {
@@ -82,11 +144,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       case 'image':
         return <Image className="h-3 w-3" />;
       case 'video':
+      case 'audio':
+      case 'text':
         return <FileText className="h-3 w-3" />;
       default:
         return <FileText className="h-3 w-3" />;
     }
   };
+
+  const displayText = message + (isListening ? interimTranscript : '');
 
   return (
     <div className="border-t bg-background p-2 sm:p-4">
@@ -98,6 +164,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               <div key={attachment.id} className="flex items-center gap-2 bg-muted px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm border">
                 {getAttachmentIcon(attachment.type)}
                 <span className="max-w-20 sm:max-w-32 truncate">{attachment.name}</span>
+                {attachment.type === 'image' && (
+                  <img src={attachment.url} alt={attachment.name} className="w-6 h-6 object-cover rounded" />
+                )}
                 <Button
                   type="button"
                   variant="ghost"
@@ -113,40 +182,64 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         )}
         
         {/* Input Area */}
-        <Card className="border-2 border-border hover:border-primary/50 transition-colors">
+        <Card className={`border-2 transition-colors ${
+          isEditMode ? 'border-primary' : 'border-border hover:border-primary/50'
+        }`}>
           <form onSubmit={handleSubmit} className="p-2 sm:p-3">
             <div className="flex gap-2 sm:gap-3 items-end">
               {/* Text Input */}
               <div className="flex-1 relative">
                 <Textarea
                   ref={textareaRef}
-                  value={message}
+                  value={displayText}
                   onChange={handleTextareaChange}
                   onKeyPress={handleKeyPress}
-                  placeholder="Type your message..."
-                  disabled={disabled}
-                  className="min-h-[40px] sm:min-h-[44px] max-h-[100px] sm:max-h-[120px] resize-none border-0 bg-transparent p-2 sm:p-3 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm sm:text-base"
+                  placeholder={isListening ? "Listening..." : "Type your message..."}
+                  disabled={disabled || isListening}
+                  className={`min-h-[40px] sm:min-h-[44px] max-h-[100px] sm:max-h-[120px] resize-none border-0 bg-transparent p-2 sm:p-3 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm sm:text-base ${
+                    isListening ? 'opacity-75' : ''
+                  }`}
                   style={{ height: '40px' }}
                 />
+                {isListening && (
+                  <div className="absolute top-2 right-2 text-red-500 text-xs animate-pulse">
+                    Recording...
+                  </div>
+                )}
               </div>
               
               {/* Action Buttons */}
               <div className="flex gap-1">
+                {/* Edit Mode Toggle */}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleEditMode}
+                  disabled={disabled}
+                  className={`h-8 w-8 sm:h-9 sm:w-9 p-0 hover:bg-muted ${
+                    isEditMode ? 'bg-primary text-primary-foreground' : ''
+                  }`}
+                  title="Toggle edit mode"
+                >
+                  <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                </Button>
+
                 {/* File Upload */}
                 <input
                   type="file"
                   multiple
                   onChange={handleFileUpload}
                   className="hidden"
-                  id="file-upload"
-                  accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
+                  ref={fileInputRef}
+                  accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.md"
                 />
                 
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => document.getElementById('file-upload')?.click()}
+                  onClick={() => fileInputRef.current?.click()}
                   disabled={disabled}
                   className="h-8 w-8 sm:h-9 sm:w-9 p-0 hover:bg-muted"
                   title="Attach files"
@@ -154,7 +247,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   <Paperclip className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Button>
                 
-                {/* Voice Input - Hidden on very small screens */}
+                {/* Voice Input */}
                 {config.enableVoice && (
                   <Button
                     type="button"
@@ -174,7 +267,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 {/* Send Button */}
                 <Button
                   type="submit"
-                  disabled={disabled || !message.trim()}
+                  disabled={disabled || !message.trim() || isListening}
                   size="sm"
                   className="h-8 w-8 sm:h-9 sm:w-9 p-0"
                   title="Send message"
@@ -188,7 +281,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         
         {/* Helper Text */}
         <div className="mt-2 text-xs text-muted-foreground text-center hidden sm:block">
-          Press Enter to send • Shift + Enter for new line • Attach files up to 10MB
+          Press Enter to send • Shift + Enter for new line • Click 🎤 for voice input • 📎 to attach files
         </div>
       </div>
     </div>

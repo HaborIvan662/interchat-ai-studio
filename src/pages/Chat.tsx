@@ -106,8 +106,8 @@ const Chat = () => {
         content: content
       });
 
-      // Get AI response
-      const aiResponse = await openaiService.sendMessage(conversationHistory, config);
+      // Get AI response with attachments
+      const aiResponse = await openaiService.sendMessage(conversationHistory, config, attachments);
 
       const aiMessage: Message = {
         id: crypto.randomUUID(),
