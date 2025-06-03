@@ -1,13 +1,14 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { X } from 'lucide-react';
+import { X, Eye, EyeOff } from 'lucide-react';
 import { ChatConfig } from '@/pages/Chat';
 
 interface ConfigPanelProps {
@@ -21,6 +22,8 @@ export const ConfigPanel: React.FC<ConfigPanelProps> = ({
   onConfigChange,
   onClose,
 }) => {
+  const [showApiKey, setShowApiKey] = useState(false);
+
   const updateConfig = (updates: Partial<ChatConfig>) => {
     onConfigChange({ ...config, ...updates });
   };
@@ -35,6 +38,34 @@ export const ConfigPanel: React.FC<ConfigPanelProps> = ({
       </CardHeader>
       
       <CardContent className="space-y-6">
+        {/* OpenAI API Key */}
+        <div className="space-y-2">
+          <Label>OpenAI API Key</Label>
+          <div className="relative">
+            <Input
+              type={showApiKey ? "text" : "password"}
+              placeholder="sk-..."
+              value={config.openaiApiKey}
+              onChange={(e) => updateConfig({ openaiApiKey: e.target.value })}
+              className="pr-10"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+              onClick={() => setShowApiKey(!showApiKey)}
+            >
+              {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Your API key is stored locally and never sent to our servers
+          </p>
+        </div>
+
+        <Separator />
+
         {/* Mode Selection */}
         <div className="space-y-2">
           <Label>Mode</Label>
@@ -66,8 +97,8 @@ export const ConfigPanel: React.FC<ConfigPanelProps> = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="gpt-4o-mini">GPT-4O Mini</SelectItem>
-              <SelectItem value="gpt-4">GPT-4</SelectItem>
-              <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+              <SelectItem value="gpt-4o">GPT-4O</SelectItem>
+              <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -134,6 +165,7 @@ export const ConfigPanel: React.FC<ConfigPanelProps> = ({
             maxTokens: 1000,
             enableVoice: true,
             enableAnnotations: true,
+            openaiApiKey: '',
           })}
         >
           Reset to Defaults

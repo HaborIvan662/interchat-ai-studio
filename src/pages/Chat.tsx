@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatSidebar } from '@/components/chat/ChatSidebar';
 import { ChatArea } from '@/components/chat/ChatArea';
@@ -38,6 +37,7 @@ export interface ChatConfig {
   maxTokens: number;
   enableVoice: boolean;
   enableAnnotations: boolean;
+  openaiApiKey: string;
 }
 
 const Chat = () => {
@@ -51,6 +51,7 @@ const Chat = () => {
     maxTokens: 1000,
     enableVoice: true,
     enableAnnotations: true,
+    openaiApiKey: '',
   });
 
   const handleSendMessage = async (content: string, attachments: Attachment[] = []) => {
@@ -65,17 +66,51 @@ const Chat = () => {
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
-    // Simulate AI response - replace with actual API call
-    setTimeout(() => {
+    try {
+      // Check if OpenAI is configured
+      if (!config.openaiApiKey) {
+        throw new Error('Please configure your OpenAI API key in settings');
+      }
+
+      // Import and configure OpenAI service
+      const { openaiService } = await import('@/services/openaiService');
+      openaiService.setApiKey(config.openaiApiKey);
+
+      // Prepare conversation history
+      const conversationHistory = messages.map(msg => ({
+        role: msg.type === 'user' ? 'user' as const : 'assistant' as const,
+        content: msg.content
+      }));
+
+      // Add current user message
+      conversationHistory.push({
+        role: 'user' as const,
+        content: content
+      });
+
+      // Get AI response
+      const aiResponse = await openaiService.sendMessage(conversationHistory, config);
+
       const aiMessage: Message = {
         id: crypto.randomUUID(),
         type: 'ai',
-        content: `I received your message: "${content}". ${attachments.length > 0 ? `I also see you've attached ${attachments.length} file(s).` : ''} How can I help you further?`,
+        content: aiResponse,
         timestamp: new Date(),
       };
+
       setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      const errorMessage: Message = {
+        id: crypto.randomUUID(),
+        type: 'ai',
+        content: `Error: ${error instanceof Error ? error.message : 'Something went wrong'}`,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleMessageFeedback = (messageId: string, feedback: MessageFeedback) => {
